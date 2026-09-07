@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { LoadingAnimator, morphedShape } from "@/lib/shapes";
+import { linearTrackSegments } from "@/lib/linear-progress";
 
 /* ---------- shared helpers ---------- */
 
@@ -160,9 +161,8 @@ export function LinearProgress({
       const end = inset + w * v;
       a.setAttribute("d", wavePath(inset, end, mid, amp, phase, LINEAR_WAVELENGTH));
       b.setAttribute("d", "");
-      // Both rounded caps extend half a stroke into the gap.
-      const trackStart = end + TRACK_GAP + trackThickness;
-      t.setAttribute("d", wavePath(v <= 0 ? inset : trackStart, inset + w, mid, 0, 0, 1));
+      const tracks = linearTrackSegments(inset, inset + w, v <= 0 ? [] : [[inset, end]], trackThickness);
+      t.setAttribute("d", tracks.map(([from, to]) => wavePath(from, to, mid, 0, 0, 1)).join(""));
       return;
     }
 
@@ -176,16 +176,9 @@ export function LinearProgress({
     a.setAttribute("d", wavePath(s1[0], s1[1], mid, ampBase, phase, LINEAR_WAVELENGTH));
     b.setAttribute("d", wavePath(s2[0], s2[1], mid, ampBase, phase, LINEAR_WAVELENGTH));
 
-    const segs = [s1, s2].filter((s) => s[1] - s[0] > 0.5).sort((p, q) => p[0] - q[0]);
-    let cursor = inset;
-    let d = "";
-    for (const s of segs) {
-      const to = s[0] - TRACK_GAP - trackThickness;
-      if (to - cursor > 0.5) d += wavePath(cursor, to, mid, 0, 0, 1);
-      cursor = Math.max(cursor, s[1] + TRACK_GAP + trackThickness);
-    }
-    if (inset + w - cursor > 0.5) d += wavePath(cursor, inset + w, mid, 0, 0, 1);
-    t.setAttribute("d", d);
+    const segs = [s1, s2].filter((s) => s[1] - s[0] > 0.5);
+    const tracks = linearTrackSegments(inset, inset + w, segs, trackThickness);
+    t.setAttribute("d", tracks.map(([from, to]) => wavePath(from, to, mid, 0, 0, 1)).join(""));
   });
 
   const stroke = { fill: "none", strokeWidth: trackThickness, strokeLinecap: "round" as const };

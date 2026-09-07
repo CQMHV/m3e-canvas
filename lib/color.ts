@@ -116,8 +116,7 @@ function tonesFor(dark: boolean, contrast: Contrast): Tones {
     if (dark) Object.assign(t, { primary: 85, onPrimaryContainer: 95, onSecondaryContainer: 95, onTertiaryContainer: 95, onSurfaceVariant: 85, outline: 70, outlineVariant: 50 });
     else Object.assign(t, { primary: 30, onPrimaryContainer: 20, onSecondaryContainer: 20, onTertiaryContainer: 20, onSurfaceVariant: 25, outline: 40, outlineVariant: 65 });
   } else if (contrast === "high") {
-    /* The high-contrast container reverses tone; its selected label follows it. */
-    t.secondary = dark ? 0 : 100;
+    t.secondary = dark ? 95 : 20;
     if (dark) Object.assign(t, { primary: 95, onPrimary: 0, primaryContainer: 80, onPrimaryContainer: 0, secondaryContainer: 80, onSecondaryContainer: 0, tertiaryContainer: 80, onTertiaryContainer: 0, onSurface: 100, onSurfaceVariant: 95, outline: 90, outlineVariant: 90 });
     else Object.assign(t, { primary: 20, primaryContainer: 30, onPrimaryContainer: 100, secondaryContainer: 30, onSecondaryContainer: 100, tertiaryContainer: 30, onTertiaryContainer: 100, onSurface: 0, onSurfaceVariant: 10, outline: 20, outlineVariant: 20 });
   }
@@ -184,3 +183,22 @@ export function onColorFor(hex: string): string {
 }
 
 export const isHex = (v: string) => /^#[0-9a-f]{6}$/i.test(v.trim());
+
+/** WCAG relative luminance contrast for two opaque sRGB colors. */
+export function contrastRatio(a: string, b: string): number {
+  const luminance = (hex: string) => {
+    const [r, g, b] = (hexToRgb(hex) ?? [0, 0, 0]).map(lin);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const x = luminance(a);
+  const y = luminance(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+/** Collapsed labels sit outside the indicator; expanded labels sit inside it. */
+export function railSelectedLabelColor(p: Palette, expanded: boolean): string {
+  const background = expanded ? p.secondaryContainer : p.surfaceContainer;
+  return contrastRatio(p.secondary, background) >= 4.5
+    ? p.secondary
+    : expanded ? p.onSecondaryContainer : p.onSurface;
+}
