@@ -136,6 +136,19 @@ describe("readProject", () => {
     await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toEqual(value);
   });
 
+  it.each([undefined, false, true])("accepts optional navigation rail booleans %s without changing them", (value) => {
+    const project = withItem({ kind: "navRail", railExpanded: value, railModal: value });
+    const before = structuredClone(project);
+    expect(isProject(project)).toBe(true);
+    expect(project).toEqual(before);
+  });
+
+  it.each(["railExpanded", "railModal"])("rejects non-boolean navigation rail field %s", (field) => {
+    for (const value of [null, 0, 1, "true", "false", {}, []]) {
+      expect(isProject(withItem({ kind: "navRail", [field]: value }))).toBe(false);
+    }
+  });
+
   it.each([0, 6, -8, "8", null])("rejects invalid progress thickness %j", async (trackThickness) => {
     const value = withItem({ kind: "circularProgress", trackThickness });
     await expect(readProject(new File([JSON.stringify(value)], "progress.json"))).resolves.toBeNull();
