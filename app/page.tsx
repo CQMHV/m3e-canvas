@@ -83,6 +83,7 @@ import { LayersPanel } from "@/components/Layers";
 import { FrameInspector, FrameSizePicker, Inspector } from "@/components/Inspector";
 import { Preview } from "@/components/Preview";
 import { Logo } from "@/components/Logo";
+import { initialLanguage } from "@/lib/initial-language";
 import { PartsPalette } from "@/components/PartsPalette";
 import { PromptPanel } from "@/components/PromptPanel";
 import { GitHubLink, Mode, Toolbar } from "@/components/Toolbar";
@@ -102,7 +103,7 @@ import { MotionPanel, ShapePanel, TypePanel } from "@/components/ThemePanel";
 import { ThemeContext, ensureFontLoaded, ensureLangFontLoaded } from "@/lib/theme";
 import { BottomSheet, MobileActionBar, MobileInspector, MobileLang, MobileSettings } from "@/components/Mobile";
 import { ConfirmDialog, IconBtn, Segmented } from "@/components/ui";
-import { Lang, LangContext, SEED_TEXT, getLang, isLang, setGlobalLang, t, translateDefaultFrameName, translateDefaultText } from "@/lib/i18n";
+import { Lang, LangContext, SEED_TEXT, getLang, setGlobalLang, t, translateDefaultFrameName, translateDefaultText } from "@/lib/i18n";
 
 /** the screens while a model drafts: primary, tertiary and primary container, drifting */
 const DRAFT_GRADIENT = (p: Palette) => `linear-gradient(120deg, ${p.primaryContainer}, ${p.tertiaryContainer}, ${p.primary}, ${p.secondaryContainer}, ${p.primaryContainer})`;
@@ -349,6 +350,7 @@ export default function Page() {
   const patchTheme = (patch: Partial<Theme>) => setTheme((t) => ({ ...t, ...patch }));
   const [frame, setFrame] = useState<FrameMode>("phone");
   const [lang, setLang] = useState<Lang>("ja");
+  const [initialized, setInitialized] = useState(false);
   const changeLanguage = (next: Lang) => {
     setGlobalLang(next);
     initialLangRef.current = next;
@@ -634,6 +636,10 @@ export default function Page() {
   useEffect(() => {
     // React's development double-run would otherwise read back its own first save
     if (loadedRef.current) return;
+    const initialLang = initialLanguage(() => localStorage.getItem(UI_KEY), navigator.language ?? "");
+    setLang(initialLang);
+    setGlobalLang(initialLang);
+    initialLangRef.current = initialLang;
     try {
       const d = localStorage.getItem(DOC_KEY);
       if (d) {
@@ -648,7 +654,6 @@ export default function Page() {
         if (isProject(value)) setDraftBefore(value);
         else localStorage.removeItem(BEFORE_KEY);
       }
-      let initialLang: Lang = "ja";
       const u = localStorage.getItem(UI_KEY);
       if (u) {
         const ui = JSON.parse(u);
@@ -659,33 +664,26 @@ export default function Page() {
         if (ui.rightW) setRightW(ui.rightW);
         if (Array.isArray(ui.favorites)) setFavorites(ui.favorites);
         if (ui.mode) setMode(ui.mode);
-        if (isLang(ui.lang)) {
-          initialLang = ui.lang;
-          setLang(ui.lang);
-        }
       } else {
-        const nl = (navigator.language ?? "").toLowerCase();
-        initialLang = nl.startsWith("zh") ? "zh" : nl.startsWith("ko") ? "ko" : nl.startsWith("ja") ? "ja" : "en";
-        setLang(initialLang);
         queueMicrotask(() => fitRef.current());
       }
-      setGlobalLang(initialLang);
-      initialLangRef.current = initialLang;
-      if (!d) {
-        setGroups(seed(initialLang));
-        setFrames([{ ...SEED_FRAMES[0], name: t("home", initialLang) }]);
-      }
     } catch {}
+    if (!hadDocRef.current) {
+      setGroups(seed(initialLang));
+      setFrames([{ ...SEED_FRAMES[0], name: t("home", initialLang) }]);
+    }
     setAiSettings(loadAiSettings());
     loadedRef.current = true;
+    setInitialized(true);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!initialized) return;
     document.documentElement.lang = lang;
     /* the editor's own text and the parts both pick up the language's Noto face */
     document.body.style.fontFamily = uiFontFamily(lang);
     ensureLangFontLoaded(lang, () => setWidths({}));
-  }, [lang]);
+  }, [initialized, lang]);
 
   useEffect(() => {
     /* an empty width map makes every measured part read its width again in the new face */
@@ -760,17 +758,17 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!loadedRef.current || editAccess !== "editable") return;
+    if (!initialized || editAccess !== "editable") return;
     try {
       localStorage.setItem(
         DOC_KEY,
         JSON.stringify({ groups, frames, paletteKey, frame, title, brief, promptEdit, platform: platform ?? undefined, customPalette: customPalette ?? undefined, dynamicColor, theme }),
       );
     } catch {}
-  }, [editAccess, groups, frames, paletteKey, frame, title, brief, promptEdit, platform, customPalette, dynamicColor, theme]);
+  }, [initialized, editAccess, groups, frames, paletteKey, frame, title, brief, promptEdit, platform, customPalette, dynamicColor, theme]);
 
   useEffect(() => {
-    if (!loadedRef.current) return;
+    if (!initialized) return;
     try {
       localStorage.setItem(
         UI_KEY,
@@ -787,6 +785,7 @@ export default function Page() {
       );
     } catch {}
   }, [
+    initialized,
     view,
     leftOpen,
     rightOpen,
