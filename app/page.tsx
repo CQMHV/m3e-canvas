@@ -644,8 +644,11 @@ export default function Page() {
     try {
       const d = localStorage.getItem(DOC_KEY);
       if (d) {
-        hadDocRef.current = true;
-        applyDoc(JSON.parse(d) as Partial<Doc>, false);
+        const doc: unknown = JSON.parse(d);
+        if (doc && typeof doc === "object" && !Array.isArray(doc)) {
+          applyDoc(doc as Partial<Doc>, false);
+          hadDocRef.current = true;
+        }
         // frame mode is decided by the device (media-query effect), not restored
       }
       const before = d ? localStorage.getItem(BEFORE_KEY) : null;
@@ -4021,7 +4024,7 @@ export default function Page() {
                 <Segmented<"edit" | "prompt">
                   options={[
                     { key: "edit", icon: "tune", title: t("edit", lang), grow: false, wide: true },
-                    { key: "prompt", icon: "auto_awesome", label: t("prompt", lang), labelContent: <UIText id="prompt" />, title: t("prompt", lang), grow: true },
+                    { key: "prompt", icon: "auto_awesome", label: t("prompt", lang), localizedLabel: (language) => t("prompt", language), grow: true },
                   ]}
                   value={rightTab}
                   onChange={setRightTab}

@@ -9,15 +9,19 @@ export const LANGUAGE_BOOTSTRAP = `(function(){
   document.documentElement.lang=lang;
   function localize(node){
     if(node.nodeType!==1)return;
-    if(node.hasAttribute('data-ui-placeholder')){
-      var labels=JSON.parse(node.getAttribute('data-ui-placeholder'));
-      node.setAttribute('placeholder',labels[lang]||'');
+    var attributes=['placeholder','title','aria-label'];
+    for(var a=0;a<attributes.length;a++){
+      var attribute=attributes[a];
+      if(node.hasAttribute('data-ui-'+attribute)){
+        var labels=JSON.parse(node.getAttribute('data-ui-'+attribute));
+        node.setAttribute(attribute,labels[lang]||'');
+      }
     }
-    var fields=node.querySelectorAll('[data-ui-placeholder]');
+    var fields=node.querySelectorAll('[data-ui-placeholder],[data-ui-title],[data-ui-aria-label]');
     for(var i=0;i<fields.length;i++)localize(fields[i]);
   }
-  // Attribute markers are available as soon as a complete input tag is parsed.
-  // Observe only additions, so our placeholder updates cannot trigger a loop.
+  // Attribute markers are available as soon as a complete element tag is parsed.
+  // Observe only additions, so our attribute updates cannot trigger a loop.
   var observer=new MutationObserver(function(records){
     for(var i=0;i<records.length;i++){
       for(var j=0;j<records[i].addedNodes.length;j++)localize(records[i].addedNodes[j]);

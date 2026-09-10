@@ -8,6 +8,7 @@ describe("pre-paint localized text", () => {
     const html = renderToStaticMarkup(<UIText id="search" />);
     for (const { key } of LANGS) {
       expect(html).toContain(`data-text-lang="${key}">${t("search", key)}</span>`);
+      expect(html.split(`data-text-lang="${key}"`)).toHaveLength(2);
     }
   });
 

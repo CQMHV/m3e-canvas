@@ -43,17 +43,17 @@ describe("pre-paint language bootstrap", () => {
     expect(document.documentElement.lang).toBe("zh");
   });
 
-  it("localizes a parsed field and stops observing after HTML parsing", () => {
+  it.each(["placeholder", "title", "aria-label"])("localizes a parsed %s and stops observing after HTML parsing", (attribute) => {
     const result = bootstrap("zh-CN", () => null);
     const setAttribute = vi.fn();
     result.mutate([{
       nodeType: 1,
-      hasAttribute: () => true,
+      hasAttribute: (name: string) => name === `data-ui-${attribute}`,
       getAttribute: () => JSON.stringify({ ja: "検索", en: "Search", zh: "搜索", ko: "검색" }),
       setAttribute,
       querySelectorAll: () => [],
     }]);
-    expect(setAttribute).toHaveBeenCalledWith("placeholder", "搜索");
+    expect(setAttribute).toHaveBeenCalledExactlyOnceWith(attribute, "搜索");
     expect(result.observe).toHaveBeenCalledWith(result.document.documentElement, { childList: true, subtree: true });
     result.ready();
     expect(result.disconnect).toHaveBeenCalledOnce();

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { COLOR_TOKENS, CardLayout, ColorToken, PLACES, Palette, Place, R_INNER, TEXT_TOKENS, TextToken, clamp } from "@/lib/tokens";
 import { AnimatePresence, motion } from "motion/react";
-import { COLOR_TOKEN_TEXT, TEXT_TOKEN_TEXT, LANGS, t, useLang, type UIKey } from "@/lib/i18n";
+import { COLOR_TOKEN_TEXT, TEXT_TOKEN_TEXT, LANGS, t, useLang, type Lang, type UIKey } from "@/lib/i18n";
+import { LocaleText } from "./LocaleText";
 import { Icon } from "./M3Node";
 import { onColorFor } from "@/lib/color";
 
@@ -59,7 +60,7 @@ export function IconBtn({
   );
 }
 
-export type SegOption<K extends string> = { key: K; icon?: string; label?: string; labelContent?: React.ReactNode; title?: string; /** small marker: this option carries something */ dot?: boolean; /** this option alone takes the spare width */ grow?: boolean; /** an icon-only option that should not shrink to a square */ wide?: boolean };
+export type SegOption<K extends string> = { key: K; icon?: string; label?: string; localizedLabel?: (lang: Lang) => string; title?: string; /** small marker: this option carries something */ dot?: boolean; /** this option alone takes the spare width */ grow?: boolean; /** an icon-only option that should not shrink to a square */ wide?: boolean };
 
 /** Connected-button group with the same fused corners as the canvas. */
 export function Segmented<K extends string>({
@@ -84,12 +85,16 @@ export function Segmented<K extends string>({
         const first = i === 0;
         const last = i === options.length - 1;
         const outer = height / 2;
+        const labels = o.localizedLabel && JSON.stringify(Object.fromEntries(LANGS.map(({ key }) => [key, o.localizedLabel!(key)])));
         return (
           <button
             key={o.key}
             onClick={() => onChange(o.key)}
             title={o.title ?? o.label}
             aria-label={o.title ?? o.label}
+            data-ui-title={labels}
+            data-ui-aria-label={labels}
+            suppressHydrationWarning={!!labels}
             className="m3-press"
             style={{
               flex: (o.grow ?? grow) ? 1 : "0 0 auto",
@@ -115,7 +120,7 @@ export function Segmented<K extends string>({
             }}
           >
             {o.icon && <Icon name={o.icon} size={Math.round(height * 0.5)} fill={on} />}
-            {o.label && <span>{o.labelContent ?? o.label}</span>}
+            {o.label && <span>{o.localizedLabel ? <LocaleText text={o.localizedLabel} /> : o.label}</span>}
             {o.dot && (
               <span
                 aria-hidden
@@ -686,7 +691,7 @@ export function Section({
 export function Tile({
   icon,
   label,
-  labelContent,
+  localizedLabel,
   p,
   onPointerDown,
   onClick,
@@ -697,7 +702,7 @@ export function Tile({
 }: {
   icon: string;
   label: string;
-  labelContent?: React.ReactNode;
+  localizedLabel?: (lang: Lang) => string;
   p: Palette;
   onPointerDown?: (e: React.PointerEvent) => void;
   onClick?: () => void;
@@ -713,6 +718,8 @@ export function Tile({
       onPointerDown={onPointerDown}
       onClick={onClick}
       title={label}
+      data-ui-title={localizedLabel && JSON.stringify(Object.fromEntries(LANGS.map(({ key }) => [key, localizedLabel(key)])))}
+      suppressHydrationWarning={!!localizedLabel}
       style={{
         position: "relative",
         display: "flex",
@@ -745,7 +752,7 @@ export function Tile({
           maxWidth: "100%",
         }}
       >
-        {labelContent ?? label}
+        {localizedLabel ? <LocaleText text={localizedLabel} /> : label}
       </span>
       {onStar && (
         <button

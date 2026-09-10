@@ -44,7 +44,7 @@ export function PartsPalette({
         key={k}
         icon={s.paletteIcon}
         label={labelOf(k)}
-        labelContent={<LocaleText text={(language) => language === "en" ? s.label : KIND_TEXT[language][k]?.noun ?? s.label} />}
+        localizedLabel={(language) => language === "en" ? s.label : KIND_TEXT[language][k]?.noun ?? s.label}
         p={p}
         onPointerDown={(e) => onPartPointerDown(e, k)}
         starred={favorites.includes(k)}
