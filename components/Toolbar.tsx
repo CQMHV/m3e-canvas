@@ -7,6 +7,7 @@ import { ShareButton } from "./ShareMenu";
 import { Icon } from "./M3Node";
 import { Popover } from "./Menus";
 import { t, useLang } from "@/lib/i18n";
+import { UIText } from "./LocaleText";
 
 export type Mode = "select" | "hand";
 
@@ -179,7 +180,7 @@ export function Toolbar({
             }}
           >
             <Icon name="auto_awesome" size={22} />
-            {t("prompt", lang)}
+            <UIText id="prompt" />
           </button>
         </Pill>
       </div>

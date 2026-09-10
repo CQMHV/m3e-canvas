@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Select only translated text, never hide the editor or its controls. */
+.m3e-locale-text > [data-text-lang] { display: none; }
+html[lang="ja"] .m3e-locale-text > [data-text-lang="ja"],
+html[lang="en"] .m3e-locale-text > [data-text-lang="en"],
+html[lang="zh"] .m3e-locale-text > [data-text-lang="zh"],
+html[lang="ko"] .m3e-locale-text > [data-text-lang="ko"] { display: inline; }
+
 html,
 body {
   height: 100%;

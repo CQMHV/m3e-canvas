@@ -83,6 +83,7 @@ import { LayersPanel } from "@/components/Layers";
 import { FrameInspector, FrameSizePicker, Inspector } from "@/components/Inspector";
 import { Preview } from "@/components/Preview";
 import { Logo } from "@/components/Logo";
+import { UIText } from "@/components/LocaleText";
 import { initialLanguage } from "@/lib/initial-language";
 import { PartsPalette } from "@/components/PartsPalette";
 import { PromptPanel } from "@/components/PromptPanel";
@@ -3435,7 +3436,7 @@ export default function Page() {
                     flex: 1,
                   }}
                 >
-                  {t(LEFT_TABS.find((x) => x.key === leftTab)?.title ?? "parts", lang)}
+                  <UIText id={LEFT_TABS.find((x) => x.key === leftTab)?.title ?? "parts"} />
                 </span>
                 <IconBtn
                   icon="left_panel_close"
@@ -4020,7 +4021,7 @@ export default function Page() {
                 <Segmented<"edit" | "prompt">
                   options={[
                     { key: "edit", icon: "tune", title: t("edit", lang), grow: false, wide: true },
-                    { key: "prompt", icon: "auto_awesome", label: t("prompt", lang), title: t("prompt", lang), grow: true },
+                    { key: "prompt", icon: "auto_awesome", label: t("prompt", lang), labelContent: <UIText id="prompt" />, title: t("prompt", lang), grow: true },
                   ]}
                   value={rightTab}
                   onChange={setRightTab}

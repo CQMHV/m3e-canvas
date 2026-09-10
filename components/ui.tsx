@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { COLOR_TOKENS, CardLayout, ColorToken, PLACES, Palette, Place, R_INNER, TEXT_TOKENS, TextToken, clamp } from "@/lib/tokens";
 import { AnimatePresence, motion } from "motion/react";
-import { COLOR_TOKEN_TEXT, TEXT_TOKEN_TEXT, t, useLang } from "@/lib/i18n";
+import { COLOR_TOKEN_TEXT, TEXT_TOKEN_TEXT, LANGS, t, useLang, type UIKey } from "@/lib/i18n";
 import { Icon } from "./M3Node";
 import { onColorFor } from "@/lib/color";
 
@@ -59,7 +59,7 @@ export function IconBtn({
   );
 }
 
-export type SegOption<K extends string> = { key: K; icon?: string; label?: string; title?: string; /** small marker: this option carries something */ dot?: boolean; /** this option alone takes the spare width */ grow?: boolean; /** an icon-only option that should not shrink to a square */ wide?: boolean };
+export type SegOption<K extends string> = { key: K; icon?: string; label?: string; labelContent?: React.ReactNode; title?: string; /** small marker: this option carries something */ dot?: boolean; /** this option alone takes the spare width */ grow?: boolean; /** an icon-only option that should not shrink to a square */ wide?: boolean };
 
 /** Connected-button group with the same fused corners as the canvas. */
 export function Segmented<K extends string>({
@@ -115,7 +115,7 @@ export function Segmented<K extends string>({
             }}
           >
             {o.icon && <Icon name={o.icon} size={Math.round(height * 0.5)} fill={on} />}
-            {o.label && <span>{o.label}</span>}
+            {o.label && <span>{o.labelContent ?? o.label}</span>}
             {o.dot && (
               <span
                 aria-hidden
@@ -141,6 +141,7 @@ export function Field({
   value,
   onChange,
   placeholder,
+  placeholderKey,
   p,
   icon,
   multiline,
@@ -151,6 +152,8 @@ export function Field({
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Localize the static search placeholder before React hydrates. */
+  placeholderKey?: UIKey;
   p: Palette;
   icon?: string;
   multiline?: boolean;
@@ -169,6 +172,8 @@ export function Field({
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
   }, [value, grow]);
+  const localizedPlaceholder = placeholderKey ? t(placeholderKey, lang) : placeholder;
+  const placeholderLabels = placeholderKey ? JSON.stringify(Object.fromEntries(LANGS.map(({ key }) => [key, t(placeholderKey, key)]))) : undefined;
   const base: React.CSSProperties = {
     width: "100%",
     padding: multiline ? `12px ${filled ? 40 : 14}px 12px ${icon ? 42 : 14}px` : `0 ${filled ? 40 : 14}px 0 ${icon ? 42 : 14}px`,
@@ -202,18 +207,23 @@ export function Field({
       {multiline ? (
         <textarea
           ref={areaRef}
+          data-ui-placeholder={placeholderLabels}
+          // The head bootstrap translates this attribute before hydration.
+          suppressHydrationWarning={!!placeholderKey}
           value={value}
           rows={rows}
           onChange={(e) => onChange(grow ? e.target.value.replace(/[\r\n]+/g, " ") : e.target.value)}
           onKeyDown={grow ? (e) => { if (e.key === "Enter") e.preventDefault(); } : undefined}
-          placeholder={placeholder}
+          placeholder={localizedPlaceholder}
           style={grow ? { ...base, overflow: "hidden" } : base}
         />
       ) : (
         <input
+          data-ui-placeholder={placeholderLabels}
+          suppressHydrationWarning={!!placeholderKey}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={localizedPlaceholder}
           style={{ ...base, height }}
         />
       )}
@@ -615,7 +625,7 @@ export function Section({
 }: {
   id: string;
   icon: string;
-  title: string;
+  title: React.ReactNode;
   p: Palette;
   children: React.ReactNode;
   right?: React.ReactNode;
@@ -676,6 +686,7 @@ export function Section({
 export function Tile({
   icon,
   label,
+  labelContent,
   p,
   onPointerDown,
   onClick,
@@ -686,6 +697,7 @@ export function Tile({
 }: {
   icon: string;
   label: string;
+  labelContent?: React.ReactNode;
   p: Palette;
   onPointerDown?: (e: React.PointerEvent) => void;
   onClick?: () => void;
@@ -733,7 +745,7 @@ export function Tile({
           maxWidth: "100%",
         }}
       >
-        {label}
+        {labelContent ?? label}
       </span>
       {onStar && (
         <button

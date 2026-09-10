@@ -6,6 +6,7 @@ import { Doc, Palette } from "@/lib/tokens";
 import { shareLink } from "@/lib/share";
 import { Icon } from "./M3Node";
 import { t, useLang } from "@/lib/i18n";
+import { UIText } from "./LocaleText";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -39,7 +40,7 @@ export function ShareButton({ p, onClick, busy }: { p: Palette; onClick: () => v
       }}
     >
       {busy && <Icon name="hourglass_top" size={18} />}
-      {busy ? t("askAiGenerating", lang) : t("askAi", lang)}
+      <UIText id={busy ? "askAiGenerating" : "askAi"} />
       {!busy && <Beta p={p} />}
     </button>
   );

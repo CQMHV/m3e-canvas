@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { CATEGORIES, KIND_ORDER, KIND_SPEC, Category, Kind, Palette } from "@/lib/tokens";
 import { Icon } from "./M3Node";
-import { KIND_TEXT, t, useLang } from "@/lib/i18n";
+import { KIND_TEXT, useLang } from "@/lib/i18n";
 import { Field, Section, Tile } from "./ui";
+import { LocaleText, UIText } from "./LocaleText";
 
 const CATEGORY_TEXT = {
   ja: { actions: "操作", navigation: "ナビゲーション", containment: "コンテナ", inputs: "入力", content: "コンテンツ", progress: "進捗" },
@@ -43,6 +44,7 @@ export function PartsPalette({
         key={k}
         icon={s.paletteIcon}
         label={labelOf(k)}
+        labelContent={<LocaleText text={(language) => language === "en" ? s.label : KIND_TEXT[language][k]?.noun ?? s.label} />}
         p={p}
         onPointerDown={(e) => onPartPointerDown(e, k)}
         starred={favorites.includes(k)}
@@ -60,12 +62,12 @@ export function PartsPalette({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
       <div style={{ padding: "12px 12px 8px" }}>
-        <Field value={q} onChange={setQ} placeholder={t("search", lang)} p={p} icon="search" height={40} />
+        <Field value={q} onChange={setQ} placeholderKey="search" p={p} icon="search" height={40} />
       </div>
 
       <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "0 8px" }}>
         {!q && favorites.length > 0 && (
-          <Section id="fav" icon="star" title={t("favorites", lang)} p={p}>
+          <Section id="fav" icon="star" title={<UIText id="favorites" />} p={p}>
             <div style={grid}>{favorites.filter((k) => KIND_SPEC[k]).map(tile)}</div>
           </Section>
         )}
@@ -80,7 +82,7 @@ export function PartsPalette({
           </div>
         ) : (
           CATEGORIES.map((c) => (
-            <Section key={c.key} id={`cat:${c.key}`} icon={c.icon} title={lang === "en" ? c.label : CATEGORY_TEXT[lang][c.key]} p={p}>
+            <Section key={c.key} id={`cat:${c.key}`} icon={c.icon} title={<LocaleText text={(language) => language === "en" ? c.label : CATEGORY_TEXT[language][c.key]} />} p={p}>
               <div style={grid}>{KIND_ORDER.filter((k) => KIND_SPEC[k].category === c.key).map(tile)}</div>
             </Section>
           ))
